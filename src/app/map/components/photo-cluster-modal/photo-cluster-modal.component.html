@@ -1,0 +1,42 @@
+<ion-modal
+  [isOpen]="isOpen"
+  (didDismiss)="close()"
+  [initialBreakpoint]="0.75"
+  [breakpoints]="[0, 0.5, 0.75, 1]"
+  handle="true"
+>
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-title>{{ cluster?.photos?.length ?? 0 }} photos ici</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="close()">
+            <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="cluster-content">
+      @if (cluster?.photos?.[0]?.address) {
+        <p class="cluster-address">
+          <ion-icon name="location-outline"></ion-icon>
+          {{ cluster?.photos?.[0]?.address }}
+        </p>
+      }
+
+      <div class="cluster-grid">
+        @for (photo of cluster?.photos; track photo.filepath) {
+          <button type="button" class="cluster-cell" (click)="selectPhoto(photo)">
+            <ion-img [src]="photo.webviewPath"></ion-img>
+            @if (photo.liked) {
+              <span class="cluster-like">
+                <ion-icon name="heart"></ion-icon>
+              </span>
+            }
+          </button>
+        }
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

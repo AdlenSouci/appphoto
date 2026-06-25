@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Build outputs
+www/
+dist/
+.angular/
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/app/release/
+*.apk
+*.aab
+
+# Capacitor
+.capacitor/
+
+# Environment & secrets
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel

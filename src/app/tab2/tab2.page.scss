@@ -1,0 +1,266 @@
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.address-card {
+  position: absolute;
+  left: 50%;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 440px;
+  z-index: 1001;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--app-radius-sm);
+  box-shadow: var(--app-shadow-md);
+  background: var(--ion-card-background, #fff);
+}
+
+.address-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.address-pin {
+  flex-shrink: 0;
+  font-size: 22px;
+  color: var(--ion-color-primary);
+}
+
+.address-label {
+  margin: 0 0 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ion-color-medium);
+}
+
+.map-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.85);
+
+  ion-spinner {
+    --color: var(--ion-color-primary);
+    transform: scale(1.4);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ion-color-medium);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .map-loader {
+    background: rgba(15, 17, 23, 0.85);
+  }
+}
+
+:host ::ng-deep .map-photo-marker,
+:host ::ng-deep .map-cluster-marker {
+  background: transparent;
+  border: none;
+}
+
+:host ::ng-deep .map-photo-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  object-fit: cover;
+  display: block;
+}
+
+:host ::ng-deep .map-cluster-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.address-card-error {
+  border-left: 4px solid var(--ion-color-danger);
+}
+
+.address-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.address-meta {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+ion-fab {
+  z-index: 1000;
+}
+
+.zoom-controls {
+  position: absolute;
+  right: 16px;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  box-shadow: var(--app-shadow-md);
+  overflow: hidden;
+}
+
+.zoom-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  ion-icon {
+    font-size: 22px;
+    color: #1f2430;
+  }
+
+  &:active {
+    background: rgba(var(--ion-color-primary-rgb), 0.12);
+  }
+}
+
+.zoom-divider {
+  width: 60%;
+  height: 1px;
+  background: rgba(15, 23, 42, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .zoom-controls {
+    background: rgba(31, 36, 48, 0.95);
+  }
+
+  .zoom-btn ion-icon {
+    color: #f1f3f7;
+  }
+
+  .zoom-divider {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 24px;
+  text-align: center;
+  gap: 6px;
+
+  .state-icon {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    margin-bottom: 12px;
+
+    ion-icon {
+      font-size: 42px;
+      color: var(--ion-color-primary);
+    }
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0 0 8px;
+    max-width: 300px;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+  }
+}
+
+:host ::ng-deep .user-location-marker {
+  background: transparent;
+  border: none;
+  position: relative;
+}
+
+:host ::ng-deep .user-location-marker .user-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%);
+}
+
+:host ::ng-deep .user-location-marker .user-dot-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.35);
+  transform: translate(-50%, -50%);
+  animation: user-pulse 2s ease-out infinite;
+}
+
+@keyframes user-pulse {
+  0% {
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+  }
+  100% {
+    width: 56px;
+    height: 56px;
+    opacity: 0;
+  }
+}

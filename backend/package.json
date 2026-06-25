@@ -1,0 +1,15 @@
+{
+  "name": "app_mobile-backend",
+  "version": "1.0.0",
+  "description": "Backend Stripe (PaymentSheet) pour app_mobile",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "stripe": "^17.5.0"
+  }
+}

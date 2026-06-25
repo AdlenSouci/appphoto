@@ -1,0 +1,128 @@
+.editor-content {
+  --background: #111;
+}
+
+.canvas-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  padding: 16px;
+
+  &.locked .editor-canvas {
+    filter: blur(2px) brightness(0.55);
+    pointer-events: none;
+  }
+}
+
+.canvas-stack {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.editor-canvas {
+  display: block;
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.image-layer {
+  position: relative;
+  z-index: 1;
+}
+
+.draw-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  touch-action: none;
+  pointer-events: none;
+
+  &.active {
+    pointer-events: auto;
+    cursor: crosshair;
+  }
+}
+
+.premium-card {
+  position: absolute;
+  z-index: 10;
+  width: min(320px, 90%);
+  margin: 0;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.crown-icon {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin: 0 auto 8px;
+  display: block;
+}
+
+.premium-price {
+  font-weight: 600;
+  margin: 12px 0;
+}
+
+.premium-note {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+.pay-button {
+  margin-top: 8px;
+}
+
+.tools-panel {
+  padding: 8px 16px 24px;
+  background: var(--ion-background-color);
+}
+
+.tools-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.color-button {
+  --padding-start: 6px;
+  --padding-end: 6px;
+  margin: 0;
+
+  &.selected .color-dot {
+    outline: 2px solid var(--ion-color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.color-dot {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+}

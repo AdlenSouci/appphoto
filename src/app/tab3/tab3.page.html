@@ -1,0 +1,141 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Profil</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="profile-wrapper">
+    <!-- En-tête avatar -->
+    <div class="profile-hero">
+      <div class="avatar" [class.avatar-premium]="premium.isPremium">
+        <img src="assets/couronne.png" alt="Premium" />
+      </div>
+      <h1>Mon espace</h1>
+      <p class="hero-subtitle">
+        {{ premium.isPremium ? 'Membre Premium' : 'Compte standard' }}
+      </p>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <ion-icon name="images-outline"></ion-icon>
+        <span class="stat-value">{{ photoCount }}</span>
+        <span class="stat-label">Photos</span>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="location-outline"></ion-icon>
+        <span class="stat-value">{{ geoCount }}</span>
+        <span class="stat-label">Géolocalisées</span>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="sparkles-outline"></ion-icon>
+        <span class="stat-value">{{ likedCount }}</span>
+        <span class="stat-label">Likées</span>
+      </div>
+    </div>
+
+    <!-- Carte Premium -->
+    <div class="premium-card" [class.unlocked]="premium.isPremium">
+      @if (premium.isPremium) {
+        <div class="premium-head">
+          <ion-icon name="checkmark-circle"></ion-icon>
+          <div>
+            <h2>Éditeur Premium actif</h2>
+            <p>Filtres et dessin débloqués sur toutes vos photos.</p>
+          </div>
+        </div>
+        <ion-button
+          expand="block"
+          fill="outline"
+          color="medium"
+          [disabled]="isPurchasing"
+          (click)="cancelPremium()"
+        >
+          <ion-icon slot="start" name="close-circle"></ion-icon>
+          Résilier l'abonnement
+        </ion-button>
+      } @else {
+        <div class="premium-head">
+          <ion-icon name="color-wand-outline"></ion-icon>
+          <div>
+            <h2>Éditeur Premium</h2>
+            <p>Débloquez les filtres et le dessin dans l'éditeur de photos.</p>
+          </div>
+        </div>
+        <ion-button expand="block" (click)="unlockPremium()" [disabled]="isPurchasing">
+          @if (isPurchasing) {
+            <ion-spinner name="dots"></ion-spinner>
+          } @else {
+            <ion-icon slot="start" name="lock-closed-outline"></ion-icon>
+            Débloquer Premium — 5,00 €
+          }
+        </ion-button>
+        @if (payment.lastError) {
+          <p class="status-error">{{ payment.lastError }}</p>
+        }
+      }
+    </div>
+
+    <!-- Autorisations -->
+    <div class="section-title">
+      <ion-icon name="shield-checkmark-outline"></ion-icon>
+      <span>Autorisations</span>
+    </div>
+    <ion-list inset="true">
+      <ion-item lines="full">
+        <ion-icon slot="start" name="camera-outline" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Caméra</h3>
+          <p [class.perm-ok]="cameraGranted" [class.perm-ko]="!cameraGranted">
+            {{ cameraStatusLabel }}
+          </p>
+        </ion-label>
+        @if (cameraGranted) {
+          <ion-icon slot="end" name="checkmark-circle" color="success"></ion-icon>
+        } @else {
+          <ion-button slot="end" size="small" (click)="askCameraPermission()">
+            Autoriser
+          </ion-button>
+        }
+      </ion-item>
+      <ion-item lines="none">
+        <ion-icon slot="start" name="location-outline" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Localisation</h3>
+          <p [class.perm-ok]="locationGranted" [class.perm-ko]="!locationGranted">
+            {{ locationStatusLabel }}
+          </p>
+        </ion-label>
+        @if (locationGranted) {
+          <ion-icon slot="end" name="checkmark-circle" color="success"></ion-icon>
+        } @else {
+          <ion-button slot="end" size="small" (click)="askLocationPermission()">
+            Autoriser
+          </ion-button>
+        }
+      </ion-item>
+    </ion-list>
+
+    <!-- À propos -->
+    <div class="section-title">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      <span>À propos</span>
+    </div>
+    <ion-list inset="true">
+      <ion-item lines="full">
+        <ion-icon slot="start" name="camera-outline" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Galerie & Carte</h3>
+          <p>Vos photos géolocalisées sur OpenStreetMap</p>
+        </ion-label>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-icon slot="start" name="information-circle-outline" color="primary"></ion-icon>
+        <ion-label>Version</ion-label>
+        <ion-note slot="end">{{ appVersion }}</ion-note>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>

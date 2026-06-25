@@ -1,0 +1,70 @@
+// Palette de l'app — pour le theming, voir :
+// https://ionicframework.com/docs/theming/
+
+:root {
+  /** Primary — indigo profond **/
+  --ion-color-primary: #5b5bd6;
+  --ion-color-primary-rgb: 91, 91, 214;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #5050bc;
+  --ion-color-primary-tint: #6b6bda;
+
+  /** Secondary — bleu vif **/
+  --ion-color-secondary: #3b82f6;
+  --ion-color-secondary-rgb: 59, 130, 246;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #3472d8;
+  --ion-color-secondary-tint: #4f8ff7;
+
+  /** Tertiary — violet **/
+  --ion-color-tertiary: #8b5cf6;
+  --ion-color-tertiary-rgb: 139, 92, 246;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #7a51d8;
+  --ion-color-tertiary-tint: #976cf7;
+
+  /** Success **/
+  --ion-color-success: #16a34a;
+  --ion-color-success-rgb: 22, 163, 74;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #138f41;
+  --ion-color-success-tint: #2dac5c;
+
+  /** Warning — or (premium) **/
+  --ion-color-warning: #f59e0b;
+  --ion-color-warning-rgb: 245, 158, 11;
+  --ion-color-warning-contrast: #1f1300;
+  --ion-color-warning-contrast-rgb: 31, 19, 0;
+  --ion-color-warning-shade: #d88b0a;
+  --ion-color-warning-tint: #f6a823;
+
+  /** Danger **/
+  --ion-color-danger: #e5484d;
+  --ion-color-danger-rgb: 229, 72, 77;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #ca3f44;
+  --ion-color-danger-tint: #e85a5f;
+
+  /** Couleur "like" (rose) — distincte du rouge d'erreur/danger **/
+  --app-like: #ff4d6d;
+
+  /** Couleur Ionic "like" (utilisable via color="like") **/
+  --ion-color-like: #ff4d6d;
+  --ion-color-like-rgb: 255, 77, 109;
+  --ion-color-like-contrast: #ffffff;
+  --ion-color-like-contrast-rgb: 255, 255, 255;
+  --ion-color-like-shade: #e04460;
+  --ion-color-like-tint: #ff5f7c;
+
+  /** Rayons & ombres réutilisables **/
+  --app-radius: 16px;
+  --app-radius-sm: 12px;
+  --app-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --app-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.1);
+  --app-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.16);
+}

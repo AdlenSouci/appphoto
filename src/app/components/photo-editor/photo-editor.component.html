@@ -1,0 +1,130 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="close()" (didPresent)="onModalDidPresent()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Éditeur photo</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="close()">
+            <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+
+      @if (premium.isPremium) {
+        <ion-toolbar>
+          <ion-segment [value]="editorMode" (ionChange)="setMode($any($event).detail.value)">
+            <ion-segment-button value="filters">
+              <ion-icon name="images-outline"></ion-icon>
+              <ion-label>Filtres</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="draw">
+              <ion-icon name="brush-outline"></ion-icon>
+              <ion-label>Dessin</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </ion-toolbar>
+      }
+    </ion-header>
+
+    <ion-content class="editor-content">
+      <div class="canvas-wrapper" [class.locked]="!premium.isPremium">
+        <div class="canvas-stack">
+          <canvas #imageCanvas class="editor-canvas image-layer"></canvas>
+          <canvas
+            #drawCanvas
+            class="editor-canvas draw-layer"
+            [class.active]="premium.isPremium && editorMode === 'draw'"
+            (pointerdown)="startDraw($event)"
+            (pointermove)="drawMove($event)"
+            (pointerup)="endDraw()"
+            (pointerleave)="endDraw()"
+          ></canvas>
+        </div>
+
+        @if (!premium.isPremium) {
+          <ion-card class="premium-card">
+            <ion-card-header>
+              <img src="assets/couronne.png" alt="Premium" class="crown-icon" />
+              <ion-card-title>Éditeur Premium</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <p>Filtres et dessin sur vos photos.</p>
+              <p class="premium-price">Déblocage via Google Pay (Stripe)</p>
+              <ion-button
+                expand="block"
+                class="pay-button"
+                [disabled]="isPurchasing"
+                (click)="purchasePremium()"
+              >
+                Payer avec Google Pay
+              </ion-button>
+              <p class="premium-note">Paiement à brancher prochainement.</p>
+            </ion-card-content>
+          </ion-card>
+        }
+      </div>
+
+      @if (premium.isPremium && editorMode === 'filters') {
+        <div class="tools-panel">
+          <ion-label class="tools-label">Filtres</ion-label>
+          <div class="chip-row">
+            @for (filter of filters; track filter.id) {
+              <ion-chip
+                [color]="activeFilter === filter.id ? 'primary' : undefined"
+                (click)="applyFilter(filter.id)"
+              >
+                <ion-label>{{ filter.label }}</ion-label>
+              </ion-chip>
+            }
+          </div>
+        </div>
+      }
+
+      @if (premium.isPremium && editorMode === 'draw') {
+        <div class="tools-panel">
+          <ion-label class="tools-label">
+            <ion-icon name="color-palette-outline"></ion-icon>
+            Couleur du pinceau
+          </ion-label>
+          <div class="color-row">
+            @for (color of brushColors; track color) {
+              <ion-button
+                fill="clear"
+                class="color-button"
+                [class.selected]="brushColor === color"
+                (click)="selectColor(color)"
+              >
+                <span class="color-dot" [style.background]="color"></span>
+              </ion-button>
+            }
+          </div>
+
+          <ion-label class="tools-label">Épaisseur</ion-label>
+          <ion-range
+            [value]="brushSize"
+            min="2"
+            max="24"
+            step="1"
+            pin="true"
+            (ionChange)="onBrushSizeChange($event)"
+          ></ion-range>
+
+          <ion-button expand="block" fill="outline" (click)="clearDrawing()">
+            Effacer le dessin
+          </ion-button>
+        </div>
+      }
+    </ion-content>
+
+    @if (premium.isPremium && canvasReady) {
+      <ion-footer>
+        <ion-toolbar>
+          <ion-button expand="block" (click)="save()">
+            <ion-icon slot="start" name="checkmark-outline"></ion-icon>
+            Enregistrer
+          </ion-button>
+        </ion-toolbar>
+      </ion-footer>
+    }
+  </ng-template>
+</ion-modal>

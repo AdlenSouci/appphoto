@@ -1,0 +1,155 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Galerie</ion-title>
+  </ion-toolbar>
+  @if (permissions.isReady && !galleryLoading && photoService.photos.length > 0) {
+    <ion-toolbar>
+      <ion-segment [value]="galleryFilter" (ionChange)="onFilterChange($event)">
+        <ion-segment-button value="all">
+          <ion-label>Toutes</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="liked">
+          <ion-label>Likées</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="unliked">
+          <ion-label>Non likées</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </ion-toolbar>
+  }
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  @if (!permissions.isReady) {
+    <div class="state-message">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Chargement…</p>
+    </div>
+  } @else {
+    @if (showGallerySkeleton) {
+      <div class="gallery-loading-banner">
+        <p>Chargement de {{ skeletonCount }} photos…</p>
+      </div>
+
+      <ion-grid>
+        <ion-row>
+          @for (slot of skeletonSlots; track slot) {
+            <ion-col size="6">
+              <div class="photo-skeleton"></div>
+            </ion-col>
+          }
+        </ion-row>
+      </ion-grid>
+    } @else {
+      @if (photoService.photos.length === 0) {
+        <div class="state-message">
+          <div class="state-icon">
+            <ion-icon name="images-outline"></ion-icon>
+          </div>
+          <h2>Aucune photo</h2>
+          <p>Appuyez sur le bouton appareil photo pour commencer votre galerie.</p>
+          <ion-button (click)="takePhoto()">
+            <ion-icon slot="start" name="camera"></ion-icon>
+            Prendre une photo
+          </ion-button>
+        </div>
+      } @else if (displayedPhotos.length === 0) {
+        <div class="state-message">
+          <div class="state-icon">
+            <ion-icon name="heart-outline"></ion-icon>
+          </div>
+          <h2>Rien ici</h2>
+          <p>Aucune photo dans cette catégorie.</p>
+        </div>
+      } @else {
+        <ion-grid class="photo-grid">
+          <ion-row>
+            @for (photo of displayedPhotos; track photo.filepath) {
+              <ion-col size="6">
+                <div class="photo-card">
+                  <div class="photo-thumb" (click)="openPhotoDetail(photo)">
+                    <ion-img [src]="photo.webviewPath"></ion-img>
+                    @if (photo.liked) {
+                      <span class="liked-badge">
+                        <ion-icon name="heart"></ion-icon>
+                      </span>
+                    }
+                  </div>
+                  <div class="photo-card-footer">
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      class="edit-button"
+                      (click)="openEditor(photo)"
+                    >
+                      <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+                    </ion-button>
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      class="delete-button"
+                      (click)="confirmDelete(photo.filepath)"
+                    >
+                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                    </ion-button>
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      class="like-button"
+                      [class.liked]="photo.liked"
+                      (click)="toggleLike(photo.filepath)"
+                    >
+                      <ion-icon
+                        slot="icon-only"
+                        [name]="photo.liked ? 'heart' : 'heart-outline'"
+                      ></ion-icon>
+                    </ion-button>
+                  </div>
+                  @if (photo.address) {
+                    <p class="photo-location">
+                      <ion-icon name="location-outline"></ion-icon>
+                      <span class="photo-location-text">{{ photo.address }}</span>
+                    </p>
+                  } @else if (photo.locating) {
+                    <p class="photo-location locating">
+                      <ion-spinner name="dots"></ion-spinner>
+                      <span class="photo-location-text">Localisation…</span>
+                    </p>
+                  } @else {
+                    <p class="photo-location no-location">
+                      <ion-icon name="location-outline"></ion-icon>
+                      <span class="photo-location-text">Position non disponible</span>
+                    </p>
+                  }
+                </div>
+              </ion-col>
+            }
+          </ion-row>
+        </ion-grid>
+      }
+    }
+  }
+
+  @if (permissions.isReady && permissions.canTakePhoto) {
+    <ion-fab vertical="bottom" horizontal="center" slot="fixed">
+      <ion-fab-button (click)="takePhoto()">
+        <ion-icon name="camera"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  }
+
+  <app-photo-detail-modal
+    [isOpen]="detailOpen"
+    [photo]="selectedPhoto"
+    (closed)="closeDetail()"
+    (liked)="onPhotoLiked($event)"
+    (deleted)="onPhotoDeleted()"
+  />
+
+  <app-photo-editor
+    [isOpen]="editorOpen"
+    [photo]="editingPhoto"
+    (closed)="closeEditor()"
+    (saved)="onPhotoEdited($event)"
+  />
+</ion-content>

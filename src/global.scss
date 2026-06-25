@@ -1,0 +1,135 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+@import '@ionic/angular/css/palettes/dark.system.css';
+@import 'leaflet/dist/leaflet.css';
+
+/* --------------------------------------------------------------------------
+ * Polish global (UX)
+ * ------------------------------------------------------------------------ */
+
+ion-toolbar {
+  --border-width: 0 !important;
+}
+
+ion-content {
+  --background: #f4f5f9;
+}
+
+@media (prefers-color-scheme: dark) {
+  ion-content {
+    --background: #0f1117;
+  }
+}
+
+/* Boutons plus doux et modernes */
+ion-button {
+  --border-radius: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+ion-fab-button {
+  --box-shadow: var(--app-shadow-md);
+}
+
+/* Barre d'onglets épurée */
+ion-tab-bar {
+  --border: 0;
+  padding-top: 4px;
+  box-shadow: 0 -1px 0 rgba(15, 23, 42, 0.06);
+}
+
+ion-tab-button {
+  --color: #94a3b8;
+  --color-selected: var(--ion-color-primary);
+}
+
+ion-tab-button ion-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Modales en feuille avec coins arrondis */
+ion-modal::part(content) {
+  border-radius: var(--app-radius);
+}
+
+/* Couleur Ionic personnalisée "like" */
+.ion-color-like {
+  --ion-color-base: var(--ion-color-like);
+  --ion-color-base-rgb: var(--ion-color-like-rgb);
+  --ion-color-contrast: var(--ion-color-like-contrast);
+  --ion-color-contrast-rgb: var(--ion-color-like-contrast-rgb);
+  --ion-color-shade: var(--ion-color-like-shade);
+  --ion-color-tint: var(--ion-color-like-tint);
+}
+
+ion-toast.app-toast {
+  --border-radius: 14px;
+  --box-shadow: 0 10px 30px rgba(15, 23, 42, 0.28);
+  --color: #fff;
+  --background: #1f2430;
+  font-size: 0.9rem;
+  font-weight: 500;
+  // Toast en haut pour ne jamais gêner les boutons du bas
+  transform: translateY(calc(env(safe-area-inset-top, 0px) + 12px));
+}
+
+ion-toast.app-toast::part(message) {
+  font-weight: 500;
+}
+
+ion-toast.app-toast::part(icon) {
+  margin-inline-end: 8px;
+}
+
+ion-toast.app-toast-success {
+  --background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+
+ion-toast.app-toast-success::part(icon) {
+  color: #fff;
+}
+
+ion-toast.app-toast-error {
+  --background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+ion-toast.app-toast-info {
+  --background: linear-gradient(135deg, #4f46e5, #6366f1);
+}

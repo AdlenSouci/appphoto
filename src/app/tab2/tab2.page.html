@@ -1,0 +1,112 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Carte</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  @if (!permissions.isReady) {
+    <div class="state-message">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Chargement de la carte…</p>
+    </div>
+  } @else if (permissions.canShowMap) {
+    <div class="map-container">
+      <div #map class="map"></div>
+
+      @if (mapLoading) {
+        <div class="map-loader">
+          <ion-spinner name="crescent"></ion-spinner>
+          <p>Chargement de la carte et des photos…</p>
+        </div>
+      }
+
+      @if (!mapLoading && locating) {
+        <ion-card class="address-card">
+          <ion-card-content>
+            <div class="address-row">
+              <ion-spinner name="dots"></ion-spinner>
+              <p class="address-label">Recherche de la position…</p>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      } @else if (!mapLoading && locationError) {
+        <ion-card class="address-card address-card-error">
+          <ion-card-content>
+            <p class="address-label">Erreur</p>
+            <p class="address-text">{{ locationError }}</p>
+            <ion-button size="small" fill="clear" (click)="locateMe()">
+              <ion-icon slot="start" name="refresh"></ion-icon>
+              Réessayer
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+      } @else if (!mapLoading && currentAddress) {
+        <ion-card class="address-card">
+          <ion-card-content>
+            <div class="address-row">
+              <ion-icon class="address-pin" name="location"></ion-icon>
+              <div>
+                <p class="address-label">Vous êtes ici</p>
+                <p class="address-text">{{ currentAddress }}</p>
+                @if (mapPhotoCount > 0) {
+                  <p class="address-meta">
+                    {{ mapPhotoCount }} photo{{ mapPhotoCount > 1 ? 's' : '' }} sur la carte
+                  </p>
+                }
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      }
+
+      <div class="zoom-controls">
+        <button type="button" class="zoom-btn" (click)="zoomIn()" aria-label="Zoom avant">
+          <ion-icon name="add"></ion-icon>
+        </button>
+        <span class="zoom-divider"></span>
+        <button type="button" class="zoom-btn" (click)="zoomOut()" aria-label="Zoom arrière">
+          <ion-icon name="remove"></ion-icon>
+        </button>
+      </div>
+
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button (click)="locateMe()">
+          <ion-icon name="locate"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+    </div>
+
+    <app-photo-detail-modal
+      [isOpen]="detailOpen"
+      [photo]="selectedPhoto"
+      (closed)="closeDetail()"
+      (liked)="onPhotoLiked($event)"
+      (deleted)="onPhotoDeleted()"
+    />
+
+    <app-photo-cluster-modal
+      [isOpen]="clusterOpen"
+      [cluster]="selectedCluster"
+      (closed)="closeCluster()"
+      (photoSelected)="onClusterPhotoSelected($event)"
+    />
+  } @else {
+    <div class="state-message">
+      <div class="state-icon">
+        <ion-icon name="map-outline"></ion-icon>
+      </div>
+      @if (permissions.isLocationDenied()) {
+        <h2>Localisation désactivée</h2>
+        <p>Ouvrez les paramètres Android, cherchez <strong>app_mobile</strong>, puis activez <strong>Position</strong>.</p>
+      } @else {
+        <h2>Activez la localisation</h2>
+        <p>Autorisez la localisation pour afficher la carte et vos photos géolocalisées.</p>
+        <ion-button (click)="requestLocationAccess()">
+          <ion-icon slot="start" name="locate"></ion-icon>
+          Autoriser la localisation
+        </ion-button>
+      }
+    </div>
+  }
+</ion-content>
