@@ -13,6 +13,10 @@ const PRODUCTS = {
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+app.get('/', (_req, res) => {
+  res.json({ ok: true, service: 'PinPhoto Stripe backend' });
+});
+
 app.post('/payment-sheet', async (req, res) => {
   try {
     const product = req.body?.product === 'download' ? 'download' : 'premium';
@@ -34,6 +38,7 @@ app.post('/payment-sheet', async (req, res) => {
         product,
         filepath: req.body?.filepath || '',
       },
+      
       description: config.label,
     });
 
@@ -51,9 +56,11 @@ app.post('/payment-sheet', async (req, res) => {
   }
 });
 
-// 0.0.0.0 = écoute sur toutes les interfaces (le téléphone peut joindre le PC via le Wi-Fi).
-app.listen(4000, '0.0.0.0', () => {
-  console.log('Backend Stripe lancé sur le port 4000');
-  console.log('  - PC          : http://localhost:4000');
-  console.log('  - Téléphone   : http://10.15.2.102:4000  (même Wi-Fi)');
-});
+// Vercel : exporte l'app. En local : npm start lance le serveur.
+module.exports = app;
+
+if (require.main === module) {
+  app.listen(4000, '0.0.0.0', () => {
+    console.log('Backend Stripe lancé sur http://localhost:4000');
+  });
+}
