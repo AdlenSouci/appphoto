@@ -26,22 +26,12 @@
       <p>Chargement…</p>
     </div>
   } @else {
-    @if (showGallerySkeleton) {
-      <div class="gallery-loading-banner">
-        <p>Chargement de {{ skeletonCount }} photos…</p>
+    @if (showGalleryLoading) {
+      <div class="state-message">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Chargement de la galerie…</p>
       </div>
-
-      <ion-grid>
-        <ion-row>
-          @for (slot of skeletonSlots; track slot) {
-            <ion-col size="6">
-              <div class="photo-skeleton"></div>
-            </ion-col>
-          }
-        </ion-row>
-      </ion-grid>
-    } @else {
-      @if (photoService.photos.length === 0) {
+    } @else if (photoService.photos.length === 0) {
         <div class="state-message">
           <div class="state-icon">
             <ion-icon name="images-outline"></ion-icon>
@@ -127,7 +117,6 @@
           </ion-row>
         </ion-grid>
       }
-    }
   }
 
   @if (permissions.isReady && permissions.canTakePhoto) {

@@ -1,4 +1,11 @@
-<ion-modal [isOpen]="isOpen" (didDismiss)="close()" (didPresent)="onModalDidPresent()">
+<ion-modal
+  [isOpen]="isOpen"
+  (didDismiss)="close()"
+  (didPresent)="onModalDidPresent()"
+  [canDismiss]="true"
+  [initialBreakpoint]="1"
+  [breakpoints]="[0, 1]"
+>
   <ng-template>
     <ion-header>
       <ion-toolbar>

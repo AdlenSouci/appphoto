@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { PremiumService } from './premium.service';
 import { PhotoService } from './photo.service';
 import { PurchaseProduct, PurchaseService } from './purchase.service';
+import { PushNotificationService } from './push-notification.service';
 import { ToastService } from './toast.service';
 
 interface PaymentSheetResponse {
@@ -25,6 +26,7 @@ export class PaymentService {
   private purchases = inject(PurchaseService);
   private photoService = inject(PhotoService);
   private toast = inject(ToastService);
+  private push = inject(PushNotificationService);
 
   lastError?: string;
 
@@ -81,7 +83,7 @@ export class PaymentService {
         paymentIntentClientSecret: sheet.paymentIntent,
         customerEphemeralKeySecret: sheet.ephemeralKey,
         customerId: sheet.customer,
-        merchantDisplayName: 'app_mobile',
+        merchantDisplayName: 'PinPhoto',
         enableGooglePay: true,
         GooglePayIsTesting: true,
         countryCode: 'FR',
@@ -94,7 +96,11 @@ export class PaymentService {
         if (request.product === 'premium') {
           await this.premium.unlock();
         }
-        await this.sendPaymentNotification(request.product);
+        this.push.sendPaymentPush(request.product);
+        await this.toast.show(
+          'Paiement OK. Fermez l\'app : push de confirmation dans ~15 secondes.',
+          'long',
+        );
         return true;
       }
 
@@ -113,20 +119,6 @@ export class PaymentService {
       console.error('Stripe payment error', error);
       await this.toast.show(this.lastError, 'long');
       return false;
-    }
-  }
-
-  private async sendPaymentNotification(product: PurchaseProduct): Promise<void> {
-    try {
-      const title = product === 'premium' ? 'Premium débloqué !' : 'Photo téléchargée !';
-      const body = product === 'premium' ? 'Ton accès éditeur premium est activé.' : 'Ta photo a bien été téléchargée.';
-      await fetch(`${environment.stripe.backendUrl}/notify-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, body }),
-      });
-    } catch (e) {
-      console.error('Erreur notification:', e);
     }
   }
 

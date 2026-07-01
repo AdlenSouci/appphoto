@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { Toast } from '@capacitor/toast';
 import { ToastController } from '@ionic/angular/standalone';
-import { checkmarkCircle, informationCircle, warningOutline } from 'ionicons/icons';
+import { checkmarkCircle, closeOutline, informationCircle, warningOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 
 type ToastVariant = 'success' | 'info' | 'error';
@@ -15,7 +14,7 @@ export class ToastService {
   private current?: HTMLIonToastElement;
 
   constructor() {
-    addIcons({ checkmarkCircle, informationCircle, warningOutline });
+    addIcons({ checkmarkCircle, informationCircle, warningOutline, closeOutline });
   }
 
   async show(
@@ -33,23 +32,22 @@ export class ToastService {
 
     await this.current?.dismiss().catch(() => undefined);
 
-    if (Capacitor.isNativePlatform()) {
-      await Toast.show({
-        text: message,
-        duration: duration === 'long' ? 'long' : 'short',
-        position: 'top',
-      });
-      return;
-    }
-
     const toast = await this.toastController.create({
       message,
-      duration: duration === 'long' ? 3500 : 2000,
+      duration: duration === 'long' ? 4000 : 2500,
       position: 'top',
       icon: this.iconFor(variant),
       cssClass: ['app-toast', `app-toast-${variant}`],
       mode: 'ios',
       animated: true,
+      swipeGesture: 'vertical',
+      buttons: [
+        {
+          icon: 'close-outline',
+          role: 'cancel',
+          side: 'end',
+        },
+      ],
     });
 
     this.current = toast;

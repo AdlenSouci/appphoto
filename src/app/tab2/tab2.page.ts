@@ -24,6 +24,7 @@ import { MapMarkersService } from '../map/services/map-markers.service';
 import { GeolocationService } from '../services/geolocation.service';
 import { PermissionsService } from '../services/permissions.service';
 import { PhotoService, UserPhoto } from '../services/photo.service';
+import { NotificationNavigationService } from '../services/notification-navigation.service';
 
 @Component({
   selector: 'app-tab2',
@@ -66,12 +67,14 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
   photoService = inject(PhotoService);
   private mapCluster = inject(MapClusterService);
   private mapMarkers = inject(MapMarkersService);
+  private notificationNav = inject(NotificationNavigationService);
   private cdr = inject(ChangeDetectorRef);
 
   private map?: L.Map;
   private userMarker?: L.Marker;
   private markersBound = false;
   private initialCenterDone = false;
+  private pendingPhotoFilepath?: string;
   private readonly userLocationIcon = L.divIcon({
     className: 'user-location-marker',
     html: `
@@ -92,6 +95,10 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
         this.renderPhotoMarkers();
         this.cdr.detectChanges();
       }
+    });
+
+    this.notificationNav.openPhoto$.subscribe((filepath) => {
+      this.openPhotoFromNotification(filepath);
     });
   }
 
@@ -200,6 +207,12 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
     } finally {
       this.mapLoading = false;
       this.cdr.detectChanges();
+
+      if (this.pendingPhotoFilepath) {
+        const filepath = this.pendingPhotoFilepath;
+        this.pendingPhotoFilepath = undefined;
+        this.openPhotoFromNotification(filepath);
+      }
     }
   }
 
@@ -234,6 +247,31 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
     this.cdr.detectChanges();
   }
 
+  private openPhotoFromNotification(filepath: string) {
+    void this.photoService.ensureLoaded().then(() => {
+      const photo = this.photoService.getPhotoByFilepath(filepath);
+      if (!photo) {
+        this.pendingPhotoFilepath = filepath;
+        return;
+      }
+
+      this.openPhotoDetail(photo);
+
+      if (photo.lat == null || photo.lng == null) {
+        return;
+      }
+
+      if (!this.map) {
+        this.pendingPhotoFilepath = filepath;
+        return;
+      }
+
+      this.map.setView([photo.lat, photo.lng], Math.max(this.map.getZoom(), 16), {
+        animate: true,
+      });
+    });
+  }
+
   private openCluster(cluster: PhotoCluster) {
     if (!this.map) {
       return;
@@ -245,10 +283,8 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
 
     const spiderfyZoom = this.mapCluster.SPIDERFY_ZOOM;
     const sameSpot = !this.boundsHaveSize(bounds);
-    const tooMany = cluster.photos.length > 8;
+    const tooMany = cluster.photos.length >= 3;
 
-    // Trop de photos au même point → on ne peut pas toutes les écarter
-    // lisiblement → modal en grille.
     if (tooMany) {
       this.selectedCluster = cluster;
       this.clusterOpen = true;

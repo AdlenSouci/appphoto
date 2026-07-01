@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import { Subject } from 'rxjs';
 import { Camera, MediaResult } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -6,10 +7,11 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Preferences } from '@capacitor/preferences';
 import { GeolocationService } from './geolocation.service';
 import { PermissionsService } from './permissions.service';
+import { PushNotificationService } from './push-notification.service';
 
 export type GalleryFilter = 'all' | 'liked' | 'unliked';
 
-export const GALLERY_SKELETON_THRESHOLD = 8;
+export const GALLERY_SKELETON_THRESHOLD = 1;
 
 export interface UserPhoto {
   filepath: string;
@@ -30,9 +32,11 @@ export class PhotoService {
   readonly locationUpdated$ = new Subject<string>();
 
   private PHOTO_STORAGE = 'photos';
+  private REPAIR_FLAG = 'photos_location_repair_v1';
   private loadPromise?: Promise<void>;
   private permissions = inject(PermissionsService);
   private geoService = inject(GeolocationService);
+  private pushService = inject(PushNotificationService);
 
   public getFilteredPhotos(filter: GalleryFilter): UserPhoto[] {
     if (filter === 'liked') {
@@ -107,62 +111,50 @@ export class PhotoService {
       await this.permissions.refresh();
     }
 
-    if (this.permissions.canShowMap) {
-      await this.geoService.warmUpGps();
-    }
-
-    let location = this.permissions.canShowMap
-      ? await this.geoService.getPositionForPhoto(3)
+    // GPS en parallèle — la caméra s'ouvre IMMÉDIATEMENT (ne pas await ici).
+    const locationTask = this.permissions.canShowMap
+      ? this.geoService.capturePositionForPhoto()
       : undefined;
 
-    const result = await Camera.takePhoto({ quality: 100 });
+    const result = await Camera.takePhoto({ quality: 80 });
 
-    if (!location && this.permissions.canShowMap) {
-      location = await this.geoService.getPositionForPhoto(3);
-    }
-
-    const savedPhoto = await this.savePhoto(result, location);
-
-    if (!location && this.permissions.canShowMap) {
-      savedPhoto.locating = true;
-    }
+    const savedPhoto = await this.savePhoto(result);
+    savedPhoto.locating = !!locationTask;
 
     this.photos.unshift(savedPhoto);
-    await this.persistPhotos();
+    void this.persistPhotos();
 
-    if (location) {
-      this.locationUpdated$.next(savedPhoto.filepath);
-    } else if (this.permissions.canShowMap) {
-      void this.applyCapturedLocation(
-        savedPhoto,
-        this.geoService.getPositionForPhoto(4),
-      );
+    if (locationTask) {
+      void this.finishPhotoLocation(savedPhoto, locationTask);
     }
 
     return true;
   }
 
-  /**
-   * Applique la position capturée au moment de la prise.
-   * Ne modifie JAMAIS une photo qui a déjà des coordonnées.
-   */
-  private async applyCapturedLocation(
+  private async finishPhotoLocation(
     photo: UserPhoto,
     locationTask: Promise<{ lat: number; lng: number; address?: string } | undefined>,
   ): Promise<void> {
-    try {
-      const location = await locationTask;
-      if (location && photo.lat == null && photo.lng == null) {
-        photo.lat = location.lat;
-        photo.lng = location.lng;
-        photo.address = location.address;
-        await this.persistPhotos();
-      }
-    } catch {
-      // Pas de position : la photo reste sans géolocalisation.
-    } finally {
-      photo.locating = false;
-      this.locationUpdated$.next(photo.filepath);
+    let location = await locationTask;
+
+    if (!location && this.permissions.canShowMap) {
+      location = await this.geoService.getPositionForPhoto(1);
+    }
+
+    if (location && photo.lat == null && photo.lng == null) {
+      photo.lat = location.lat;
+      photo.lng = location.lng;
+      photo.address =
+        location.address ??
+        (await this.geoService.resolveAddress(location.lat, location.lng));
+      await this.persistPhotos();
+    }
+
+    photo.locating = false;
+    this.locationUpdated$.next(photo.filepath);
+
+    if (photo.lat != null && photo.lng != null && photo.address?.trim()) {
+      void this.pushService.sendPhotoMemoryPush(photo);
     }
   }
 
@@ -219,18 +211,12 @@ export class PhotoService {
     cameraPhoto: MediaResult,
     location?: { lat: number; lng: number; address?: string },
   ): Promise<UserPhoto> {
-    const base64Data = await this.readAsBase64(cameraPhoto);
-
     const fileName = `${Date.now()}.jpeg`;
-    await Filesystem.writeFile({
-      path: fileName,
-      data: base64Data,
-      directory: Directory.Data,
-    });
+    const written = await this.writeCameraFile(cameraPhoto, fileName);
 
     const photo: UserPhoto = {
       filepath: fileName,
-      webviewPath: base64Data,
+      webviewPath: (await this.resolveWebPath(fileName)) ?? written,
       liked: false,
       capturedAt: new Date().toISOString(),
     };
@@ -242,6 +228,19 @@ export class PhotoService {
     }
 
     return photo;
+  }
+
+  private async writeCameraFile(
+    cameraPhoto: MediaResult,
+    fileName: string,
+  ): Promise<string> {
+    const base64Data = await this.readAsBase64(cameraPhoto);
+    await Filesystem.writeFile({
+      path: fileName,
+      data: base64Data,
+      directory: Directory.Data,
+    });
+    return base64Data;
   }
 
   private async readAsBase64(cameraPhoto: MediaResult): Promise<string> {
@@ -279,23 +278,29 @@ export class PhotoService {
     const { value } = await Preferences.get({ key: this.PHOTO_STORAGE });
     const stored = (value ? JSON.parse(value) : []) as UserPhoto[];
 
-    const loaded: UserPhoto[] = [];
-    for (const photo of stored) {
-      const webviewPath = await this.readPhotoDataUrl(photo.filepath);
-      if (webviewPath) {
-        photo.webviewPath = webviewPath;
-        if (photo.lat != null) {
-          photo.lat = Number(photo.lat);
-        }
-        if (photo.lng != null) {
-          photo.lng = Number(photo.lng);
-        }
-        loaded.push(photo);
-      }
-    }
+    const loaded = (
+      await Promise.all(
+        stored.map(async (photo) => {
+          const webviewPath = await this.resolveWebPath(photo.filepath);
+          if (!webviewPath) {
+            return undefined;
+          }
+
+          if (photo.lat != null) {
+            photo.lat = Number(photo.lat);
+          }
+          if (photo.lng != null) {
+            photo.lng = Number(photo.lng);
+          }
+
+          photo.webviewPath = webviewPath;
+          return photo;
+        }),
+      )
+    ).filter((photo): photo is UserPhoto => photo != null);
 
     this.photos = loaded;
-    await this.repairStoredLocations(loaded);
+    void this.repairStoredLocations(loaded);
   }
 
   /**
@@ -304,6 +309,11 @@ export class PhotoService {
    * (ex. Châteaurenard), on recalcule la position depuis l'adresse.
    */
   private async repairStoredLocations(photos: UserPhoto[]): Promise<void> {
+    const { value: repairDone } = await Preferences.get({ key: this.REPAIR_FLAG });
+    if (repairDone === 'done') {
+      return;
+    }
+
     let changed = false;
 
     for (const photo of photos) {
@@ -339,6 +349,25 @@ export class PhotoService {
     if (changed) {
       await this.persistPhotos();
       this.locationUpdated$.next('repair');
+    }
+
+    await Preferences.set({ key: this.REPAIR_FLAG, value: 'done' });
+  }
+
+  /** Chemin d'affichage rapide (fichier local, pas de base64 en mémoire). */
+  private async resolveWebPath(filepath: string): Promise<string | undefined> {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const { uri } = await Filesystem.getUri({
+          path: filepath,
+          directory: Directory.Data,
+        });
+        return Capacitor.convertFileSrc(uri);
+      }
+
+      return await this.readPhotoDataUrl(filepath);
+    } catch {
+      return undefined;
     }
   }
 

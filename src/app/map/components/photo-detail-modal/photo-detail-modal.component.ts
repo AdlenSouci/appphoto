@@ -149,6 +149,7 @@ export class PhotoDetailModalComponent implements OnChanges {
     const alert = await this.alertController.create({
       header: 'Supprimer cette photo ?',
       message: 'Elle sera retirée de la galerie et de la carte.',
+      backdropDismiss: true,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

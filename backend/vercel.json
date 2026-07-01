@@ -1,5 +1,16 @@
 {
   "rewrites": [
     { "source": "/(.*)", "destination": "/server.js" }
+  ],
+  "functions": {
+    "server.js": {
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    {
+      "path": "/process-pushes",
+      "schedule": "* * * * *"
+    }
   ]
 }

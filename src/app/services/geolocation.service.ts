@@ -56,51 +56,50 @@ export class GeolocationService {
     }
 
     try {
-      await this.readPositionForPhoto();
+      const position = await this.readQuickPosition();
+      this.position = position;
     } catch {
       // Pas bloquant.
     }
   }
 
   /**
-   * GPS au moment de la prise de photo.
-   * Essaie d'abord une position fraîche, puis des repli si le GPS met du temps.
+   * Position pour une photo : rapide, sans bloquer l'ouverture caméra.
+   * Utilise la position en cache si disponible, sinon GPS court (max ~5 s).
    */
-  public async getPositionForPhoto(attempts = 2): Promise<UserPosition | undefined> {
-    await this.permissions.refresh();
-
+  public async capturePositionForPhoto(): Promise<UserPosition | undefined> {
     if (!this.permissions.canShowMap) {
-      const granted = await this.permissions.requestLocationPermission();
-      await this.permissions.refresh();
-      if (!granted) {
-        return undefined;
-      }
+      return undefined;
     }
 
-    for (let attempt = 0; attempt < attempts; attempt++) {
-      try {
-        const position = await this.readPositionForPhoto();
-        position.address = await this.resolveAddress(position.lat, position.lng);
-        return position;
-      } catch {
-        if (attempt < attempts - 1) {
-          await this.delay(1200);
-        }
-      }
+    if (this.position?.lat != null && this.position.lng != null) {
+      return {
+        lat: this.position.lat,
+        lng: this.position.lng,
+        address: this.position.address,
+      };
     }
 
-    return undefined;
+    const saved = await this.loadSaved();
+    if (saved?.lat != null && saved.lng != null) {
+      this.position = saved;
+      return saved;
+    }
+
+    try {
+      const position = await this.readQuickPosition();
+      this.position = position;
+      return position;
+    } catch {
+      return undefined;
+    }
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  private async readPositionForPhoto(): Promise<UserPosition> {
+  /** GPS rapide pour ne pas bloquer la prise de photo. */
+  private async readQuickPosition(): Promise<UserPosition> {
     const strategies: PositionOptions[] = [
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
-      { enableHighAccuracy: false, timeout: 20000, maximumAge: 120000 },
+      { enableHighAccuracy: true, timeout: 4000, maximumAge: 30000 },
+      { enableHighAccuracy: false, timeout: 3000, maximumAge: 120000 },
     ];
 
     let lastError: unknown;
@@ -117,6 +116,34 @@ export class GeolocationService {
     }
 
     throw lastError ?? new Error('Position unavailable');
+  }
+
+  /**
+   * GPS au moment de la prise de photo (repli après la capture).
+   */
+  public async getPositionForPhoto(attempts = 1): Promise<UserPosition | undefined> {
+    if (!this.permissions.canShowMap) {
+      return undefined;
+    }
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        const position = await this.readQuickPosition();
+        position.address = await this.resolveAddress(position.lat, position.lng);
+        this.position = position;
+        return position;
+      } catch {
+        if (attempt < attempts - 1) {
+          await this.delay(800);
+        }
+      }
+    }
+
+    return this.position;
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /** GPS silencieux : uniquement si la permission est déjà accordée. */

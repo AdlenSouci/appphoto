@@ -6,25 +6,13 @@ export type ProjectFn = (lat: number, lng: number) => { x: number; y: number };
 
 @Injectable({ providedIn: 'root' })
 export class MapClusterService {
-  /**
-   * Rayon (pixels à l'écran) en dessous duquel deux photos sont regroupées.
-   * Comme on projette en pixels au zoom courant, le regroupement se défait
-   * automatiquement quand on zoome (les vignettes s'écartent).
-   */
-  private readonly CLUSTER_RADIUS_PX = 64;
+  private readonly CLUSTER_RADIUS_PX = 52;
 
-  /** Zoom à partir duquel un petit groupe au même point s'écarte en éventail. */
-  readonly SPIDERFY_ZOOM = 15;
+  readonly SPIDERFY_ZOOM = 13;
 
-  /** Au-delà de ce nombre de photos, on garde le badge (→ modal au clic). */
-  private readonly MAX_SPIDERFY = 8;
+  /** 3+ photos au même point GPS → badge + modal. */
+  private readonly MODAL_CLUSTER_MIN = 3;
 
-  /**
-   * Regroupe les photos selon leur distance EN PIXELS au zoom courant.
-   * - 1 photo seule → vignette
-   * - plusieurs photos proches, zoom élevé, peu nombreuses → écartées en éventail
-   * - sinon → badge numéroté (cluster)
-   */
   clusterByPixels(
     photos: UserPhoto[],
     project: ProjectFn,
@@ -78,11 +66,44 @@ export class MapClusterService {
       }
 
       const center = this.center(groupPhotos);
+      const sameGps = this.sameGpsPoint(groupPhotos);
 
-      // Zoom élevé + peu de photos → on les écarte en éventail (spiderfy)
-      // pour qu'elles deviennent des vignettes cliquables, même au même point GPS.
-      if (zoom >= this.SPIDERFY_ZOOM && groupPhotos.length <= this.MAX_SPIDERFY) {
-        const offsets = this.fanOffsetsMeters(groupPhotos.length);
+      // 3+ au même endroit → badge cliquable (ouvre la modal grille).
+      if (sameGps && groupPhotos.length >= this.MODAL_CLUSTER_MIN) {
+        clusters.push({
+          id: `cluster-${center.lat.toFixed(5)}-${center.lng.toFixed(5)}-${groupPhotos.length}`,
+          lat: center.lat,
+          lng: center.lng,
+          photos: groupPhotos,
+          isCluster: true,
+        });
+        continue;
+      }
+
+      // 2 au même endroit → écartées en mètres (visibles sans zoomer).
+      if (sameGps && groupPhotos.length === 2) {
+        const offsets = this.fanOffsetsMeters(2);
+        groupPhotos.forEach((photo, index) => {
+          const position = this.applyMeterOffset(
+            center.lat,
+            center.lng,
+            offsets[index].x,
+            offsets[index].y,
+          );
+          clusters.push({
+            id: `${photo.filepath}-fan`,
+            lat: position.lat,
+            lng: position.lng,
+            photos: [photo],
+            isCluster: false,
+          });
+        });
+        continue;
+      }
+
+      // Plusieurs photos proches (pas exactement au même point).
+      if (zoom >= this.SPIDERFY_ZOOM && groupPhotos.length === 2) {
+        const offsets = this.fanOffsetsMeters(2);
         groupPhotos.forEach((photo, index) => {
           const position = this.applyMeterOffset(
             center.lat,
@@ -113,19 +134,24 @@ export class MapClusterService {
     return clusters;
   }
 
-  /**
-   * Décalages en mètres pour écarter des vignettes au même point GPS.
-   * En coordonnées réelles (pas en pixels) → stable au zoom/dézoom.
-   */
+  private sameGpsPoint(photos: UserPhoto[]): boolean {
+    const lat = photos[0].lat!.toFixed(5);
+    const lng = photos[0].lng!.toFixed(5);
+    return photos.every(
+      (photo) =>
+        photo.lat!.toFixed(5) === lat && photo.lng!.toFixed(5) === lng,
+    );
+  }
+
   private fanOffsetsMeters(count: number): { x: number; y: number }[] {
     if (count === 2) {
       return [
-        { x: -14, y: 0 },
-        { x: 14, y: 0 },
+        { x: -22, y: 0 },
+        { x: 22, y: 0 },
       ];
     }
 
-    const radius = Math.max(16, 10 + count * 2);
+    const radius = Math.max(22, 12 + count * 3);
     const offsets: { x: number; y: number }[] = [];
     for (let index = 0; index < count; index++) {
       const angle = (2 * Math.PI * index) / count - Math.PI / 2;

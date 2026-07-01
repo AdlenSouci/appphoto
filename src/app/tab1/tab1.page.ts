@@ -34,7 +34,6 @@ import { GeolocationService } from '../services/geolocation.service';
 import { PermissionsService } from '../services/permissions.service';
 import {
   GalleryFilter,
-  GALLERY_SKELETON_THRESHOLD,
   PhotoService,
   UserPhoto,
 } from '../services/photo.service';
@@ -90,8 +89,8 @@ export class Tab1Page implements ViewDidEnter, OnDestroy {
     return Array.from({ length: this.skeletonCount }, (_, index) => index);
   }
 
-  get showGallerySkeleton(): boolean {
-    return this.galleryLoading && this.skeletonCount >= GALLERY_SKELETON_THRESHOLD;
+  get showGalleryLoading(): boolean {
+    return this.galleryLoading;
   }
 
   get displayedPhotos() {
@@ -112,9 +111,9 @@ export class Tab1Page implements ViewDidEnter, OnDestroy {
   private async loadGallery() {
     const count = await this.photoService.getSavedCount();
 
-    if (count >= GALLERY_SKELETON_THRESHOLD) {
+    if (count > 0) {
       this.galleryLoading = true;
-      this.skeletonCount = count;
+      this.skeletonCount = Math.min(count, 6);
       this.cdr.detectChanges();
     }
 
@@ -177,6 +176,7 @@ export class Tab1Page implements ViewDidEnter, OnDestroy {
     const alert = await this.alertController.create({
       header: 'Supprimer cette photo ?',
       message: 'Elle sera retirée de la galerie et de la carte.',
+      backdropDismiss: true,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {

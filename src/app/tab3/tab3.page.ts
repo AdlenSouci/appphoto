@@ -170,6 +170,7 @@ export class Tab3Page implements ViewDidEnter {
     const alert = await this.alertController.create({
       header: 'Résilier l\'abonnement ?',
       message: 'Vous perdrez l\'accès aux filtres et au dessin. Vous pourrez le reprendre à tout moment.',
+      backdropDismiss: true,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
