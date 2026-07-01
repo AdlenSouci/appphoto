@@ -23,6 +23,12 @@ android/app/release/
 # Environment & secrets
 .env
 .env.local
+android/app/google-services.json
+ios/App/GoogleService-Info.plist
+backend/*.json
+!backend/package.json
+!backend/package-lock.json
+!backend/vercel.json
 
 # IDE
 .vscode/
