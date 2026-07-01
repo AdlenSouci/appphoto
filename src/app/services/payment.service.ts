@@ -94,6 +94,7 @@ export class PaymentService {
         if (request.product === 'premium') {
           await this.premium.unlock();
         }
+        await this.sendPaymentNotification(request.product);
         return true;
       }
 
@@ -112,6 +113,20 @@ export class PaymentService {
       console.error('Stripe payment error', error);
       await this.toast.show(this.lastError, 'long');
       return false;
+    }
+  }
+
+  private async sendPaymentNotification(product: PurchaseProduct): Promise<void> {
+    try {
+      const title = product === 'premium' ? 'Premium débloqué !' : 'Photo téléchargée !';
+      const body = product === 'premium' ? 'Ton accès éditeur premium est activé.' : 'Ta photo a bien été téléchargée.';
+      await fetch(`${environment.stripe.backendUrl}/notify-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body }),
+      });
+    } catch (e) {
+      console.error('Erreur notification:', e);
     }
   }
 

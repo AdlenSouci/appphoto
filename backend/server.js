@@ -144,6 +144,27 @@ app.post('/notify-custom', async (req, res) => {
   }
 });
 
+app.post('/notify-payment', async (req, res) => {
+  const { title, body } = req.body;
+
+  try {
+    const snapshot = await db.collection('devices').get();
+    const results = await Promise.allSettled(
+      snapshot.docs.map(doc =>
+        getMessaging().send({
+          token: doc.data().fcmToken,
+          notification: { title, body },
+          data: { redirect: '/tabs/tab3' },
+        })
+      )
+    );
+    res.json({ sent: results.filter(r => r.status === 'fulfilled').length });
+  } catch (err) {
+    console.error('Erreur:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/payment-sheet', async (req, res) => {
   try {
     const product = req.body?.product === 'download' ? 'download' : 'premium';
