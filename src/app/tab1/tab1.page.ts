@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy } from '@angular/core';
 import { ViewDidEnter } from '@ionic/angular';
 import { AlertController } from '@ionic/angular/standalone';
 import {
@@ -64,12 +64,15 @@ import {
     PhotoDetailModalComponent,
   ],
 })
-export class Tab1Page implements ViewDidEnter {
+export class Tab1Page implements ViewDidEnter, OnDestroy {
   photoService = inject(PhotoService);
   permissions = inject(PermissionsService);
   private geoService = inject(GeolocationService);
   private alertController = inject(AlertController);
   private cdr = inject(ChangeDetectorRef);
+  private locationSub = this.photoService.locationUpdated$.subscribe(() => {
+    this.cdr.detectChanges();
+  });
 
   galleryLoading = false;
   skeletonCount = 0;
@@ -98,7 +101,12 @@ export class Tab1Page implements ViewDidEnter {
   async ionViewDidEnter() {
     await this.permissions.refresh();
     this.cdr.detectChanges();
+    void this.geoService.warmUpGps();
     await this.loadGallery();
+  }
+
+  ngOnDestroy() {
+    this.locationSub.unsubscribe();
   }
 
   private async loadGallery() {
@@ -168,6 +176,7 @@ export class Tab1Page implements ViewDidEnter {
   async confirmDelete(filepath: string) {
     const alert = await this.alertController.create({
       header: 'Supprimer cette photo ?',
+      message: 'Elle sera retirée de la galerie et de la carte.',
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -186,7 +195,6 @@ export class Tab1Page implements ViewDidEnter {
   private async deletePhoto(filepath: string) {
     await this.photoService.deletePhoto(filepath);
     this.cdr.detectChanges();
-    await this.geoService.showToast('Photo supprimée');
   }
 
   async takePhoto() {
@@ -195,6 +203,7 @@ export class Tab1Page implements ViewDidEnter {
       await this.geoService.showToast(
         'Autorisez la caméra pour prendre une photo',
         'long',
+        'error',
       );
       return;
     }

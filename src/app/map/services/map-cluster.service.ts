@@ -19,9 +19,6 @@ export class MapClusterService {
   /** Au-delà de ce nombre de photos, on garde le badge (→ modal au clic). */
   private readonly MAX_SPIDERFY = 8;
 
-  /** Taille d'une vignette (px) pour calculer l'écartement de l'éventail. */
-  private readonly THUMB_SIZE = 44;
-
   /**
    * Regroupe les photos selon leur distance EN PIXELS au zoom courant.
    * - 1 photo seule → vignette
@@ -85,16 +82,20 @@ export class MapClusterService {
       // Zoom élevé + peu de photos → on les écarte en éventail (spiderfy)
       // pour qu'elles deviennent des vignettes cliquables, même au même point GPS.
       if (zoom >= this.SPIDERFY_ZOOM && groupPhotos.length <= this.MAX_SPIDERFY) {
-        const offsets = this.fanOffsets(groupPhotos.length);
+        const offsets = this.fanOffsetsMeters(groupPhotos.length);
         groupPhotos.forEach((photo, index) => {
+          const position = this.applyMeterOffset(
+            center.lat,
+            center.lng,
+            offsets[index].x,
+            offsets[index].y,
+          );
           clusters.push({
             id: `${photo.filepath}-fan`,
-            lat: center.lat,
-            lng: center.lng,
+            lat: position.lat,
+            lng: position.lng,
             photos: [photo],
             isCluster: false,
-            pixelOffsetX: offsets[index].x,
-            pixelOffsetY: offsets[index].y,
           });
         });
         continue;
@@ -113,24 +114,18 @@ export class MapClusterService {
   }
 
   /**
-   * Décalages écran (px) pour écarter des vignettes au même point :
-   * - 2 photos : côte à côte
-   * - 3+ : en cercle autour du point
+   * Décalages en mètres pour écarter des vignettes au même point GPS.
+   * En coordonnées réelles (pas en pixels) → stable au zoom/dézoom.
    */
-  private fanOffsets(count: number): { x: number; y: number }[] {
+  private fanOffsetsMeters(count: number): { x: number; y: number }[] {
     if (count === 2) {
-      const half = this.THUMB_SIZE / 2 - 4;
       return [
-        { x: -half, y: 0 },
-        { x: half, y: 0 },
+        { x: -14, y: 0 },
+        { x: 14, y: 0 },
       ];
     }
 
-    const radius = Math.max(
-      this.THUMB_SIZE * 0.62,
-      (this.THUMB_SIZE * 0.82) / 2 / Math.sin(Math.PI / count),
-    );
-
+    const radius = Math.max(16, 10 + count * 2);
     const offsets: { x: number; y: number }[] = [];
     for (let index = 0; index < count; index++) {
       const angle = (2 * Math.PI * index) / count - Math.PI / 2;
@@ -141,6 +136,18 @@ export class MapClusterService {
     }
 
     return offsets;
+  }
+
+  private applyMeterOffset(
+    lat: number,
+    lng: number,
+    eastMeters: number,
+    northMeters: number,
+  ): { lat: number; lng: number } {
+    const latRad = (lat * Math.PI) / 180;
+    const dLat = northMeters / 110540;
+    const dLng = eastMeters / (111320 * Math.cos(latRad));
+    return { lat: lat + dLat, lng: lng + dLng };
   }
 
   private center(photos: UserPhoto[]): { lat: number; lng: number } {

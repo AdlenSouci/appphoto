@@ -1,3 +1,7 @@
 node_modules/
 .env
 .vercel
+*.json
+!package.json
+!package-lock.json
+!vercel.json

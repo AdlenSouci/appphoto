@@ -42,17 +42,17 @@ export class MapMarkersService {
     handlers: MapMarkerHandlers,
   ): L.Marker {
     const photo = cluster.photos[0];
-    const offsetX = cluster.pixelOffsetX ?? 0;
-    const offsetY = cluster.pixelOffsetY ?? 0;
     const icon = L.divIcon({
       className: 'map-photo-marker',
       html: `<img class="map-photo-thumb" src="${photo.webviewPath}" alt="Photo" />`,
       iconSize: [44, 44],
-      // Décalage écran : photos au même point écartées en éventail (spiderfy).
-      iconAnchor: [22 - offsetX, 22 - offsetY],
+      iconAnchor: [22, 22],
     });
 
-    return L.marker([cluster.lat, cluster.lng], { icon }).on('click', () => {
+    return L.marker([cluster.lat, cluster.lng], {
+      icon,
+      zIndexOffset: 200,
+    }).on('click', () => {
       handlers.onPhotoClick(photo);
     });
   }
@@ -68,7 +68,10 @@ export class MapMarkersService {
       iconAnchor: [20, 20],
     });
 
-    return L.marker([cluster.lat, cluster.lng], { icon }).on('click', () => {
+    return L.marker([cluster.lat, cluster.lng], {
+      icon,
+      zIndexOffset: 200,
+    }).on('click', () => {
       handlers.onClusterClick(cluster);
     });
   }

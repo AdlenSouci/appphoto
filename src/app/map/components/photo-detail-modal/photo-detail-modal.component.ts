@@ -167,7 +167,6 @@ export class PhotoDetailModalComponent implements OnChanges {
   private async deletePhoto(filepath: string): Promise<void> {
     await this.photoService.deletePhoto(filepath);
     this.deleted.emit(filepath);
-    await this.toast.show('Photo supprimée');
     this.close();
   }
 }

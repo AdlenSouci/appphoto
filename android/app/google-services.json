@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1098144171510",
+    "project_id": "notifpush-7920b",
+    "storage_bucket": "notifpush-7920b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098144171510:android:f523dde8d558fedf0033d7",
+        "android_client_info": {
+          "package_name": "io.ionic.starter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9X1L4UZUKKbFxpu8fIG_T_sjl0oI5XSs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { Toast } from '@capacitor/toast';
 import { ToastController } from '@ionic/angular/standalone';
 import { checkmarkCircle, informationCircle, warningOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
@@ -31,17 +33,33 @@ export class ToastService {
 
     await this.current?.dismiss().catch(() => undefined);
 
+    if (Capacitor.isNativePlatform()) {
+      await Toast.show({
+        text: message,
+        duration: duration === 'long' ? 'long' : 'short',
+        position: 'top',
+      });
+      return;
+    }
+
     const toast = await this.toastController.create({
       message,
-      duration: duration === 'long' ? 2000 : 1200,
+      duration: duration === 'long' ? 3500 : 2000,
       position: 'top',
       icon: this.iconFor(variant),
       cssClass: ['app-toast', `app-toast-${variant}`],
-      swipeGesture: 'vertical',
+      mode: 'ios',
+      animated: true,
     });
 
     this.current = toast;
     await toast.present();
+
+    toast.onDidDismiss().then(() => {
+      if (this.current === toast) {
+        this.current = undefined;
+      }
+    });
   }
 
   async success(message: string, duration: 'short' | 'long' = 'short'): Promise<void> {

@@ -1,14 +1,12 @@
-.map-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
+.map-container,
 .map {
   width: 100%;
   height: 100%;
 }
 
+.map-container {
+  position: relative;
+}
 .address-card {
   position: absolute;
   left: 50%;
@@ -74,35 +72,84 @@
   }
 }
 
-:host ::ng-deep .map-photo-marker,
-:host ::ng-deep .map-cluster-marker {
-  background: transparent;
-  border: none;
-}
+:host ::ng-deep {
+  .map-photo-marker,
+  .map-cluster-marker,
+  .user-location-marker {
+    background: transparent;
+    border: none;
+  }
 
-:host ::ng-deep .map-photo-thumb {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-  object-fit: cover;
-  display: block;
-}
+  .map-photo-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    object-fit: cover;
+    display: block;
+  }
 
-:host ::ng-deep .map-cluster-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--ion-color-primary);
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  .map-cluster-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ion-color-primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+
+  .user-gps-marker {
+    position: relative;
+    width: 56px;
+    height: 64px;
+    pointer-events: none;
+  }
+
+  .user-gps-dot,
+  .user-gps-pulse {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+  }
+
+  .user-gps-dot {
+    background: #16a34a;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    z-index: 2;
+  }
+
+  .user-gps-pulse {
+    background: rgba(22, 163, 74, 0.35);
+    animation: user-pulse 2s ease-out infinite;
+    z-index: 1;
+  }
+
+  .user-gps-label {
+    position: absolute;
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #16a34a;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
 }
 
 .address-card-error {
@@ -221,46 +268,17 @@ ion-fab {
   }
 }
 
-:host ::ng-deep .user-location-marker {
-  background: transparent;
-  border: none;
-  position: relative;
-}
-
-:host ::ng-deep .user-location-marker .user-dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #2563eb;
-  border: 3px solid #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-  transform: translate(-50%, -50%);
-}
-
-:host ::ng-deep .user-location-marker .user-dot-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: rgba(37, 99, 235, 0.35);
-  transform: translate(-50%, -50%);
-  animation: user-pulse 2s ease-out infinite;
-}
 
 @keyframes user-pulse {
   0% {
-    width: 16px;
-    height: 16px;
-    opacity: 0.7;
+    width: 18px;
+    height: 18px;
+    opacity: 0.75;
   }
   100% {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
+    margin-top: -17px;
     opacity: 0;
   }
 }

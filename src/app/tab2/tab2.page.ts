@@ -71,16 +71,28 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
   private map?: L.Map;
   private userMarker?: L.Marker;
   private markersBound = false;
-  private refreshTimeout?: number;
+  private initialCenterDone = false;
   private readonly userLocationIcon = L.divIcon({
     className: 'user-location-marker',
-    html: '<span class="user-dot-pulse"></span><span class="user-dot"></span>',
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
+    html: `
+      <div class="user-gps-marker" aria-label="Votre position">
+        <span class="user-gps-pulse"></span>
+        <span class="user-gps-dot"></span>
+        <span class="user-gps-label">Vous</span>
+      </div>
+    `,
+    iconSize: [56, 64],
+    iconAnchor: [28, 28],
   });
 
   constructor() {
     addIcons({ add, locate, location, refresh, remove });
+    this.photoService.locationUpdated$.subscribe(() => {
+      if (this.map) {
+        this.renderPhotoMarkers();
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   zoomIn() {
@@ -99,6 +111,7 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
       await this.permissions.refresh();
     }
 
+    void this.geoService.warmUpGps();
     this.cdr.detectChanges();
 
     if (!this.permissions.canShowMap) {
@@ -123,6 +136,7 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
       await this.geoService.showToast(
         'Autorisez la localisation pour afficher la carte',
         'long',
+        'error',
       );
     }
   }
@@ -164,17 +178,9 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
       maxZoom: 19,
     }).addTo(this.map);
 
-    // Recalcule les clusters seulement à la fin du zoom (pas pendant le drag).
+    // Recalcule les clusters à la fin du zoom.
     if (!this.markersBound) {
-      this.map.on('zoomend', () => {
-        // Petit délai pour laisser l'animation se terminer
-        if (this.refreshTimeout) {
-          clearTimeout(this.refreshTimeout);
-        }
-        this.refreshTimeout = window.setTimeout(() => {
-          this.renderPhotoMarkers(false);
-        }, 100);
-      });
+      this.map.on('zoomend', () => this.renderPhotoMarkers());
       this.markersBound = true;
     }
   }
@@ -189,16 +195,15 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
 
     try {
       await this.photoService.ensureLoaded();
-      this.renderPhotoMarkers(true);
-
       await this.refreshLiveLocation(false);
+      this.renderPhotoMarkers();
     } finally {
       this.mapLoading = false;
       this.cdr.detectChanges();
     }
   }
 
-  private renderPhotoMarkers(fit = false) {
+  private renderPhotoMarkers() {
     if (!this.map) {
       return;
     }
@@ -206,14 +211,6 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
     const photos = this.photoService.getPhotosWithLocation();
     this.mapPhotoCount = photos.length;
     this.photosWithoutLocation = this.photoService.getPhotosWithoutLocationCount();
-
-    // Au premier rendu, on cadre la carte sur toutes les photos.
-    if (fit && photos.length > 0) {
-      const bounds = L.latLngBounds(
-        photos.map((photo) => [photo.lat!, photo.lng!] as [number, number]),
-      );
-      this.map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16, animate: false });
-    }
 
     const zoom = this.map.getZoom();
     const clusters = this.mapCluster.clusterByPixels(
@@ -330,7 +327,7 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
         : 'Impossible de récupérer la position. Activez le GPS et attendez quelques secondes.';
 
       if (showToast) {
-        await this.geoService.showToast(this.locationError, 'long');
+        await this.geoService.showToast(this.locationError, 'long', 'error');
       }
     } finally {
       this.locating = false;
@@ -346,9 +343,9 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
     this.locationError = undefined;
     this.showUserMarker(lat, lng);
 
-    const photoCount = this.photoService.getPhotosWithLocation().length;
-    if (photoCount === 0) {
-      this.map.setView([lat, lng], 14);
+    if (!this.initialCenterDone) {
+      this.map.setView([lat, lng], 14, { animate: false });
+      this.initialCenterDone = true;
     }
 
     this.cdr.detectChanges();
@@ -368,16 +365,26 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
       this.userMarker.remove();
     }
 
-    this.userMarker = L.marker([lat, lng], { icon: this.userLocationIcon }).addTo(this.map);
+    this.userMarker = L.marker([lat, lng], {
+      icon: this.userLocationIcon,
+      zIndexOffset: 1000,
+      interactive: false,
+    }).addTo(this.map);
   }
 
   async locateMe() {
     if (!this.map) {
-      await this.geoService.showToast('La carte n\'est pas encore prête');
+      await this.geoService.showToast('La carte n\'est pas encore prête', 'short', 'error');
       return;
     }
 
     await this.refreshLiveLocation(true);
+    const position = this.geoService.position;
+    if (position) {
+      this.map.setView([position.lat, position.lng], Math.max(this.map.getZoom(), 14), {
+        animate: true,
+      });
+    }
   }
 
   private destroyMap() {
@@ -385,6 +392,7 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
     this.map?.remove();
     this.map = undefined;
     this.markersBound = false;
+    this.initialCenterDone = false;
     this.userMarker = undefined;
     this.currentAddress = undefined;
     this.locationError = undefined;

@@ -50,16 +50,16 @@
   --ion-color-danger-shade: #ca3f44;
   --ion-color-danger-tint: #e85a5f;
 
-  /** Couleur "like" (rose) — distincte du rouge d'erreur/danger **/
-  --app-like: #ff4d6d;
+  /** Couleur "like" — bleu, bien distinct du rouge danger **/
+  --app-like: #2563eb;
 
   /** Couleur Ionic "like" (utilisable via color="like") **/
-  --ion-color-like: #ff4d6d;
-  --ion-color-like-rgb: 255, 77, 109;
+  --ion-color-like: #2563eb;
+  --ion-color-like-rgb: 37, 99, 235;
   --ion-color-like-contrast: #ffffff;
   --ion-color-like-contrast-rgb: 255, 255, 255;
-  --ion-color-like-shade: #e04460;
-  --ion-color-like-tint: #ff5f7c;
+  --ion-color-like-shade: #1d4ed8;
+  --ion-color-like-tint: #3b82f6;
 
   /** Rayons & ombres réutilisables **/
   --app-radius: 16px;

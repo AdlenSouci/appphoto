@@ -2,7 +2,7 @@
   <ng-template>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Photo</ion-title>
+        <ion-title>Détail</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="close()">
             <ion-icon slot="icon-only" name="close-outline"></ion-icon>
@@ -17,21 +17,26 @@
           <ion-spinner name="crescent"></ion-spinner>
         </div>
       } @else {
-        <ion-img [src]="photo.webviewPath" class="detail-image"></ion-img>
+        <div class="detail-body">
+          <div class="detail-image-wrap">
+            <ion-img [src]="photo.webviewPath" class="detail-image"></ion-img>
+          </div>
 
-        <div class="detail-meta">
-          @if (captureDate) {
-            <p class="detail-date">{{ captureDate | date: 'dd/MM/yyyy à HH:mm' }}</p>
-          }
+          <div class="detail-meta">
+            <div class="detail-info">
+              @if (captureDate) {
+                <p class="detail-date">{{ captureDate | date: 'dd/MM/yyyy à HH:mm' }}</p>
+              }
 
-          @if (photo.address) {
-            <p class="detail-location">
-              <ion-icon name="location-outline"></ion-icon>
-              {{ photo.address }}
-            </p>
-          }
+              @if (photo.address) {
+                <p class="detail-location">
+                  <ion-icon name="location-outline"></ion-icon>
+                  <span>{{ photo.address }}</span>
+                </p>
+              }
+            </div>
 
-          <div class="detail-actions">
+            <div class="detail-actions">
             @if (downloadUnlocked) {
               <p class="download-badge">
                 <ion-icon name="checkmark-circle"></ion-icon>
@@ -67,6 +72,7 @@
             }
 
             <ion-button
+              expand="block"
               fill="outline"
               [color]="photo.liked ? 'like' : 'medium'"
               (click)="toggleLike()"
@@ -78,10 +84,11 @@
               {{ photo.liked ? 'Likée' : 'Liker' }}
             </ion-button>
 
-            <ion-button fill="outline" color="danger" (click)="confirmDelete()">
+            <ion-button expand="block" fill="outline" color="danger" (click)="confirmDelete()">
               <ion-icon slot="start" name="trash-outline"></ion-icon>
               Supprimer
             </ion-button>
+            </div>
           </div>
         </div>
       }

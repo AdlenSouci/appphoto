@@ -89,7 +89,33 @@ ion-modal::part(content) {
   border-radius: var(--app-radius);
 }
 
-/* Couleur Ionic personnalisée "like" */
+/* Alertes centrées, taille raisonnable */
+ion-alert {
+  --width: min(92vw, 320px);
+  --max-width: 320px;
+  --backdrop-opacity: 0.35;
+
+  .alert-wrapper {
+    border-radius: 16px;
+  }
+
+  .alert-head {
+    padding-top: 20px;
+    padding-inline: 20px;
+  }
+
+  .alert-message {
+    padding-inline: 20px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .alert-button-group {
+    padding: 8px;
+  }
+}
+
+/* Toasts web (sur téléphone = toast natif Capacitor) */
 .ion-color-like {
   --ion-color-base: var(--ion-color-like);
   --ion-color-base-rgb: var(--ion-color-like-rgb);
@@ -100,15 +126,21 @@ ion-modal::part(content) {
 }
 
 ion-toast.app-toast {
-  --border-radius: 14px;
-  --box-shadow: 0 10px 30px rgba(15, 23, 42, 0.28);
+  --border-radius: 10px;
+  --box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
   --color: #fff;
   --background: #1f2430;
-  font-size: 0.9rem;
+  --width: fit-content;
+  --max-width: min(85vw, 260px);
+  --min-height: 28px;
+  --start: 50%;
+  --end: auto;
+  font-size: 0.75rem;
   font-weight: 500;
-  // Toast en haut pour ne jamais gêner les boutons du bas
-  transform: translateY(calc(env(safe-area-inset-top, 0px) + 12px));
+  margin-top: calc(env(safe-area-inset-top, 0px) + 6px);
+  z-index: 9999;
 }
+
 
 ion-toast.app-toast::part(message) {
   font-weight: 500;
