@@ -4,6 +4,6 @@ export const environment = {
     publishableKey:
       'pk_test_51TlkZ4FsDvyDpRQarv7AodYhQadNLPlHcIusmdQB52EOWP91D7IM1wnHx63MDxXmkoiwEBrr33kpGj2qMNG3BgqG002ifzAaAI',
     // Sans câble : téléphone + PC sur le même Wi-Fi → IP locale du PC.
-    backendUrl: 'https://appphoto-delta.vercel.app',
+    backendUrl: 'https://appphoto-delta-teal.vercel.app',
   },
 };

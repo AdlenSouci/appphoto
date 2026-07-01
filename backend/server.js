@@ -6,7 +6,9 @@ const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 let waitUntil = (promise) => {
   Promise.resolve(promise).catch((err) => console.error('push background:', err));
@@ -235,6 +237,10 @@ app.post('/register-token', async (req, res) => {
 });
 
 app.get('/dashboard', async (req, res) => {
+  if (!db) {
+    return res.status(503).send('Firebase non configuré sur le serveur');
+  }
+
   const snapshot = await db.collection('devices').get();
   const devices = snapshot.docs.map(d => ({
     id: d.id,
@@ -439,6 +445,10 @@ app.post('/notify-photo-memory', async (req, res) => {
 });
 
 app.post('/payment-sheet', async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe non configuré (STRIPE_SECRET_KEY manquant sur Vercel)' });
+  }
+
   try {
     const product = req.body?.product === 'download' ? 'download' : 'premium';
     const config = PRODUCTS[product];
