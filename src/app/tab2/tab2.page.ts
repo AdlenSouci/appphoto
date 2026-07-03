@@ -25,6 +25,7 @@ import { GeolocationService } from '../services/geolocation.service';
 import { PermissionsService } from '../services/permissions.service';
 import { PhotoService, UserPhoto } from '../services/photo.service';
 import { NotificationNavigationService } from '../services/notification-navigation.service';
+import { PushNotificationService } from '../services/push-notification.service';
 
 @Component({
   selector: 'app-tab2',
@@ -68,6 +69,7 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
   private mapCluster = inject(MapClusterService);
   private mapMarkers = inject(MapMarkersService);
   private notificationNav = inject(NotificationNavigationService);
+  private push = inject(PushNotificationService);
   private cdr = inject(ChangeDetectorRef);
 
   private map?: L.Map;
@@ -389,6 +391,9 @@ export class Tab2Page implements ViewDidEnter, ViewDidLeave {
     const address = await this.geoService.resolveAddress(lat, lng);
     this.currentAddress = address;
     await this.geoService.savePosition({ lat, lng, address });
+    if (address) {
+      this.push.notifyCurrentLocation(address);
+    }
     this.cdr.detectChanges();
   }
 

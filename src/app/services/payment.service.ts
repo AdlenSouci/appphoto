@@ -97,10 +97,6 @@ export class PaymentService {
           await this.premium.unlock();
         }
         this.push.sendPaymentPush(request.product);
-        await this.toast.show(
-          'Paiement OK. Fermez l\'app : push de confirmation dans ~15 secondes.',
-          'long',
-        );
         return true;
       }
 

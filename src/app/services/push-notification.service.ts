@@ -8,10 +8,9 @@ import { NotificationNavigationService } from './notification-navigation.service
 import { UserPhoto } from './photo.service';
 
 /**
- * Notifications PinPhoto :
- * - Paiement + souvenir photo → vraie push FCM via Vercel (app fermée / arrière-plan).
- * - FCM app ouverte (hors paiement) → recopiée en LocalNotifications pour la barre.
- * - Clic souvenir → ouvre la photo sur la carte.
+ * Notifications PinPhoto (barre du haut Android) :
+ * - Paiement / souvenir / position → LocalNotifications (immédiat ou ~5 s).
+ * - En plus : push FCM serveur si app fermée.
  */
 
 const PAYMENT_CHANNEL = 'pinphoto_payments';
@@ -23,10 +22,32 @@ const MEMORY_NOTIFIED_KEY = 'photo_memory_notified';
 
 export type PaymentProduct = 'premium' | 'download';
 
+export function paymentNotificationCopy(product: PaymentProduct): { title: string; body: string } {
+  if (product === 'premium') {
+    return {
+      title: `${APP_NAME} — Paiement confirmé`,
+      body: 'Récap : Éditeur Premium activé (5,00 €). Photos géolocalisées sur la carte.',
+    };
+  }
+  return {
+    title: `${APP_NAME} — Paiement confirmé`,
+    body: 'Récap : Téléchargement photo (1,00 €). Export enregistré sur votre appareil.',
+  };
+}
+
+export function photoMemoryNotificationCopy(address: string): { title: string; body: string } {
+  const place = address.trim() || 'cet endroit';
+  return {
+    title: `${APP_NAME} — Souvenir`,
+    body: `Vous vous souvenez de cette photo à ${place} ? Appuyez pour la revoir.`,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
   private initialized = false;
   private memoryNotified = new Set<string>();
+  private lastLocationNotified?: string;
   private nav = inject(NotificationNavigationService);
 
   async init(): Promise<void> {
@@ -76,12 +97,56 @@ export class PushNotificationService {
     }
   }
 
-  /**
-   * Demande une vraie push FCM de paiement au serveur.
-   * Le serveur attend ~5 s avant l'envoi : ferme l'app après avoir payé.
-   */
+  /** Paiement : notif barre tout de suite + push FCM serveur (app fermée). */
   sendPaymentPush(product: PaymentProduct): void {
+    void this.showPaymentNotification(product);
     void this.requestPaymentPush(product);
+  }
+
+  /** Photo géolocalisée : notif barre + push FCM serveur. */
+  sendPhotoMemoryPush(photo: UserPhoto): void {
+    if (!photo.address?.trim() || this.memoryNotified.has(photo.filepath)) {
+      return;
+    }
+
+    this.memoryNotified.add(photo.filepath);
+    void this.persistMemoryNotified();
+    void this.showPhotoMemoryNotification(photo);
+    void this.requestPhotoMemoryPush(photo);
+  }
+
+  /** Carte : « Vous êtes actuellement à … » dans la barre de notifications. */
+  notifyCurrentLocation(address: string): void {
+    const place = address?.trim();
+    if (!place || place === this.lastLocationNotified) {
+      return;
+    }
+
+    this.lastLocationNotified = place;
+    void this.showSystemNotification(
+      `${APP_NAME} — Position`,
+      `Vous êtes actuellement à ${place}.`,
+      APP_CHANNEL,
+    );
+  }
+
+  private async showPaymentNotification(product: PaymentProduct): Promise<void> {
+    const { title, body } = paymentNotificationCopy(product);
+    await this.showSystemNotification(title, body, PAYMENT_CHANNEL, {
+      action: ACTION_PAYMENT,
+    });
+  }
+
+  private async showPhotoMemoryNotification(photo: UserPhoto): Promise<void> {
+    const { title, body } = photoMemoryNotificationCopy(photo.address!);
+    const scheduleAt = new Date(Date.now() + 5000);
+    await this.showSystemNotification(
+      title,
+      body,
+      APP_CHANNEL,
+      { action: ACTION_OPEN_PHOTO, filepath: photo.filepath },
+      scheduleAt,
+    );
   }
 
   private async requestPaymentPush(product: PaymentProduct): Promise<void> {
@@ -106,24 +171,12 @@ export class PushNotificationService {
     }
   }
 
-  /** Vraie push FCM « souvenir » après géolocalisation (fermez l'app pour la voir). */
-  sendPhotoMemoryPush(photo: UserPhoto): void {
-    void this.requestPhotoMemoryPush(photo);
-  }
-
   private async requestPhotoMemoryPush(photo: UserPhoto): Promise<void> {
-    if (!photo.address?.trim() || this.memoryNotified.has(photo.filepath)) {
-      return;
-    }
-
     const { value: token } = await Preferences.get({ key: 'fcm_token' });
     if (!token) {
-      console.warn('Pas de token FCM — push souvenir impossible');
+      console.warn('Pas de token FCM — push souvenir serveur ignorée');
       return;
     }
-
-    this.memoryNotified.add(photo.filepath);
-    await this.persistMemoryNotified();
 
     try {
       const response = await fetch(`${environment.stripe.backendUrl}/notify-photo-memory`, {
@@ -139,13 +192,9 @@ export class PushNotificationService {
 
       if (!response.ok) {
         console.error('notify-photo-memory:', await response.text());
-        this.memoryNotified.delete(photo.filepath);
-        await this.persistMemoryNotified();
       }
     } catch (error) {
       console.error('Erreur push souvenir:', error);
-      this.memoryNotified.delete(photo.filepath);
-      await this.persistMemoryNotified();
     }
   }
 
